@@ -765,7 +765,7 @@ class V8_EXPORT_PRIVATE Parser : public NON_EXPORTED_BASE(ParserBase<Parser>) {
   // into a single n-ary expression. In that case, *x will be changed to an
   // n-ary expression.
   bool CollapseNaryExpression(Expression** x, Expression* y, Token::Value op,
-                              int pos);
+                              int pos, SourceRange right_range = {});
 
   // Rewrites the following types of unary expressions:
   // not <literal> -> true / false
@@ -1011,6 +1011,15 @@ class V8_EXPORT_PRIVATE Parser : public NON_EXPORTED_BASE(ParserBase<Parser>) {
     return parameters_end_pos_ != kNoSourcePosition;
   }
 
+  V8_INLINE void RecordBinaryOperationSourceRange(
+      Expression* node, const SourceRange& left_range,
+      const SourceRange& right_range) {
+    if (source_range_map_ == nullptr) return;
+    source_range_map_->Insert(
+        node->AsBinaryOperation(),
+        new (zone()) BinaryOperationSourceRanges(left_range, right_range));
+  }
+
   V8_INLINE void RecordBlockSourceRange(Block* node,
                                         int32_t continuation_position) {
     if (source_range_map_ == nullptr) return;
@@ -1032,6 +1041,13 @@ class V8_EXPORT_PRIVATE Parser : public NON_EXPORTED_BASE(ParserBase<Parser>) {
     source_range_map_->Insert(
         node->AsConditional(),
         new (zone()) ConditionalSourceRanges(then_range, else_range));
+  }
+
+  V8_INLINE void RecordExpressionSourceRange(
+      Expression* node, const SourceRange& body_range) {
+    if (source_range_map_ == nullptr) return;
+    source_range_map_->Insert(static_cast<Expression*>(node),
+      new (zone()) ExpressionSourceRanges(body_range));
   }
 
   V8_INLINE void RecordJumpStatementSourceRange(Statement* node,

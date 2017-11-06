@@ -30,9 +30,11 @@ struct SourceRange {
 // The list of ast node kinds that have associated source ranges. Note that this
 // macro is not undefined at the end of this file.
 #define AST_SOURCE_RANGE_LIST(V) \
+  V(BinaryOperation)             \
   V(Block)                       \
   V(CaseClause)                  \
   V(Conditional)                 \
+  V(Expression)                  \
   V(IfStatement)                 \
   V(IterationStatement)          \
   V(JumpStatement)               \
@@ -48,6 +50,8 @@ enum class SourceRangeKind {
   kContinuation,
   kElse,
   kFinally,
+  kLeft,
+  kRight,
   kThen,
 };
 
@@ -69,6 +73,28 @@ class ContinuationSourceRanges : public AstNodeSourceRanges {
 
  private:
   int32_t continuation_position_;
+};
+
+class BinaryOperationSourceRanges final : public AstNodeSourceRanges {
+ public:
+  explicit BinaryOperationSourceRanges(const SourceRange& left_range,
+                                       const SourceRange& right_range)
+      : left_range_(left_range), right_range_(right_range) {}
+
+  SourceRange GetRange(SourceRangeKind kind) {
+    switch (kind) {
+      case SourceRangeKind::kLeft:
+        return left_range_;
+      case SourceRangeKind::kRight:
+        return right_range_;
+      default:
+        UNREACHABLE();
+    }
+  }
+
+ private:
+  SourceRange left_range_;
+  SourceRange right_range_;
 };
 
 class BlockSourceRanges final : public ContinuationSourceRanges {
@@ -111,6 +137,20 @@ class ConditionalSourceRanges final : public AstNodeSourceRanges {
  private:
   SourceRange then_range_;
   SourceRange else_range_;
+};
+
+class ExpressionSourceRanges final : public AstNodeSourceRanges {
+ public:
+  explicit ExpressionSourceRanges(const SourceRange& body_range)
+      : body_range_(body_range) {}
+
+  SourceRange GetRange(SourceRangeKind kind) {
+    DCHECK_EQ(kind, SourceRangeKind::kBody);
+    return body_range_;
+  }
+
+ private:
+  SourceRange body_range_;
 };
 
 class IfStatementSourceRanges final : public AstNodeSourceRanges {

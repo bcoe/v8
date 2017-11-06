@@ -4082,11 +4082,16 @@ void BytecodeGenerator::VisitNaryLogicalTest(Token::Value token,
 
   VisitLogicalTestSubExpression(token, expr->first(), then_labels, else_labels);
   for (size_t i = 0; i < expr->subsequent_length() - 1; ++i) {
+    BuildIncrementBlockCoverageCounterIfEnabled(expr->subsequent(i),
+                                                SourceRangeKind::kBody);
     VisitLogicalTestSubExpression(token, expr->subsequent(i), then_labels,
                                   else_labels);
   }
   // The last test has the same then, else and fallthrough as the parent test.
-  VisitForTest(expr->subsequent(expr->subsequent_length() - 1), then_labels,
+  Expression* last = expr->subsequent(expr->subsequent_length() - 1);
+  BuildIncrementBlockCoverageCounterIfEnabled(last,
+                                              SourceRangeKind::kBody);
+  VisitForTest(last, then_labels,
                else_labels, fallthrough);
 }
 
@@ -4122,19 +4127,26 @@ void BytecodeGenerator::VisitLogicalOrExpression(BinaryOperation* binop) {
   Expression* left = binop->left();
   Expression* right = binop->right();
 
+  BuildIncrementBlockCoverageCounterIfEnabled(binop, SourceRangeKind::kLeft);
+  int right_slot =
+      AllocateBlockCoverageSlotIfEnabled(binop, SourceRangeKind::kRight);
+
   if (execution_result()->IsTest()) {
     TestResultScope* test_result = execution_result()->AsTest();
     if (left->ToBooleanIsTrue()) {
       builder()->Jump(test_result->NewThenLabel());
     } else if (left->ToBooleanIsFalse() && right->ToBooleanIsFalse()) {
+      BuildIncrementBlockCoverageCounterIfEnabled(right_slot);
       builder()->Jump(test_result->NewElseLabel());
     } else {
+      BuildIncrementBlockCoverageCounterIfEnabled(right_slot);
       VisitLogicalTest(Token::OR, left, right);
     }
     test_result->SetResultConsumedByTest();
   } else {
     BytecodeLabels end_labels(zone());
     if (VisitLogicalOrSubExpression(left, &end_labels)) return;
+    BuildIncrementBlockCoverageCounterIfEnabled(right_slot);
     VisitForAccumulatorValue(right);
     end_labels.Bind(builder());
   }
@@ -4143,6 +4155,16 @@ void BytecodeGenerator::VisitLogicalOrExpression(BinaryOperation* binop) {
 void BytecodeGenerator::VisitNaryLogicalOrExpression(NaryOperation* expr) {
   Expression* first = expr->first();
   DCHECK_GT(expr->subsequent_length(), 0);
+
+  // Allocate a coverage slot for every sub-expression.
+  if (block_coverage_builder_ != nullptr) {
+    BuildIncrementBlockCoverageCounterIfEnabled(first,
+                                                SourceRangeKind::kBody);
+    for (size_t i = 0; i < expr->subsequent_length(); ++i) {
+      AllocateBlockCoverageSlotIfEnabled(expr->subsequent(i),
+        SourceRangeKind::kBody);
+    }
+  }
 
   if (execution_result()->IsTest()) {
     TestResultScope* test_result = execution_result()->AsTest();
@@ -4156,13 +4178,18 @@ void BytecodeGenerator::VisitNaryLogicalOrExpression(NaryOperation* expr) {
     BytecodeLabels end_labels(zone());
     if (VisitLogicalOrSubExpression(first, &end_labels)) return;
     for (size_t i = 0; i < expr->subsequent_length() - 1; ++i) {
+      BuildIncrementBlockCoverageCounterIfEnabled(expr->subsequent(i),
+                                                  SourceRangeKind::kBody);
       if (VisitLogicalOrSubExpression(expr->subsequent(i), &end_labels)) {
         return;
       }
     }
     // We have to visit the last value even if it's true, because we need its
     // actual value.
-    VisitForAccumulatorValue(expr->subsequent(expr->subsequent_length() - 1));
+    Expression* last = expr->subsequent(expr->subsequent_length() - 1);
+    BuildIncrementBlockCoverageCounterIfEnabled(last,
+                                                SourceRangeKind::kBody);
+    VisitForAccumulatorValue(last);
     end_labels.Bind(builder());
   }
 }
@@ -4171,19 +4198,27 @@ void BytecodeGenerator::VisitLogicalAndExpression(BinaryOperation* binop) {
   Expression* left = binop->left();
   Expression* right = binop->right();
 
+  BuildIncrementBlockCoverageCounterIfEnabled(binop, SourceRangeKind::kLeft);
+  int right_slot =
+      AllocateBlockCoverageSlotIfEnabled(binop, SourceRangeKind::kRight);
+
   if (execution_result()->IsTest()) {
     TestResultScope* test_result = execution_result()->AsTest();
     if (left->ToBooleanIsFalse()) {
+      BuildIncrementBlockCoverageCounterIfEnabled(right_slot);
       builder()->Jump(test_result->NewElseLabel());
     } else if (left->ToBooleanIsTrue() && right->ToBooleanIsTrue()) {
+      BuildIncrementBlockCoverageCounterIfEnabled(right_slot);
       builder()->Jump(test_result->NewThenLabel());
     } else {
       VisitLogicalTest(Token::AND, left, right);
+      BuildIncrementBlockCoverageCounterIfEnabled(right_slot);
     }
     test_result->SetResultConsumedByTest();
   } else {
     BytecodeLabels end_labels(zone());
     if (VisitLogicalAndSubExpression(left, &end_labels)) return;
+    BuildIncrementBlockCoverageCounterIfEnabled(right_slot);
     VisitForAccumulatorValue(right);
     end_labels.Bind(builder());
   }
@@ -4192,6 +4227,16 @@ void BytecodeGenerator::VisitLogicalAndExpression(BinaryOperation* binop) {
 void BytecodeGenerator::VisitNaryLogicalAndExpression(NaryOperation* expr) {
   Expression* first = expr->first();
   DCHECK_GT(expr->subsequent_length(), 0);
+
+  // Allocate a coverage slot for every sub-expression.
+  if (block_coverage_builder_ != nullptr) {
+    BuildIncrementBlockCoverageCounterIfEnabled(first,
+                                                SourceRangeKind::kBody);
+    for (size_t i = 0; i < expr->subsequent_length(); ++i) {
+      AllocateBlockCoverageSlotIfEnabled(expr->subsequent(i),
+        SourceRangeKind::kBody);
+    }
+  }
 
   if (execution_result()->IsTest()) {
     TestResultScope* test_result = execution_result()->AsTest();
@@ -4205,13 +4250,18 @@ void BytecodeGenerator::VisitNaryLogicalAndExpression(NaryOperation* expr) {
     BytecodeLabels end_labels(zone());
     if (VisitLogicalAndSubExpression(first, &end_labels)) return;
     for (size_t i = 0; i < expr->subsequent_length() - 1; ++i) {
+      BuildIncrementBlockCoverageCounterIfEnabled(expr->subsequent(i),
+                                                  SourceRangeKind::kBody);
       if (VisitLogicalAndSubExpression(expr->subsequent(i), &end_labels)) {
         return;
       }
     }
     // We have to visit the last value even if it's false, because we need its
     // actual value.
-    VisitForAccumulatorValue(expr->subsequent(expr->subsequent_length() - 1));
+    Expression* last = expr->subsequent(expr->subsequent_length() - 1);
+    BuildIncrementBlockCoverageCounterIfEnabled(last,
+                                                SourceRangeKind::kBody);
+    VisitForAccumulatorValue(last);
     end_labels.Bind(builder());
   }
 }
