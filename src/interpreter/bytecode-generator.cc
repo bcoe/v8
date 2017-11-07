@@ -4259,8 +4259,7 @@ void BytecodeGenerator::VisitNaryLogicalAndExpression(NaryOperation* expr) {
 
 void BytecodeGenerator::AllocateNaryCoverageSlots(NaryOperation* expr,
                                                   std::vector<int>* slots) {
-  Expression* first = expr->first();
-  BuildIncrementBlockCoverageCounterIfEnabled(first, SourceRangeKind::kBody);
+  if (block_coverage_builder_ == nullptr) return;
   for (size_t i = 0; i < expr->subsequent_length(); i++) {
     slots->push_back(AllocateBlockCoverageSlotIfEnabled(
         expr->subsequent(i), SourceRangeKind::kBody));
