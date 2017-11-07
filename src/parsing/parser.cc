@@ -317,6 +317,7 @@ bool Parser::CollapseNaryExpression(Expression** x, Expression* y,
   if ((*x)->IsBinaryOperation()) {
     BinaryOperation* binop = (*x)->AsBinaryOperation();
     if (binop->op() != op) return false;
+
     nary = factory()->NewNaryOperation(op, binop->left(), 2);
     nary->AddSubsequent(binop->right(), binop->position());
     *x = nary;

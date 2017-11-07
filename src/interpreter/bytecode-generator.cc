@@ -4067,7 +4067,7 @@ void BytecodeGenerator::VisitLogicalTest(Token::Value token, Expression* left,
 
   VisitLogicalTestSubExpression(token, left, then_labels, else_labels);
   // The last test has the same then, else and fallthrough as the parent test.
-  if (right_slot != -1) {
+  if (right_slot != BlockCoverageBuilder::kNoCoverageArraySlot) {
     BuildIncrementBlockCoverageCounterIfEnabled(right_slot);
   }
   VisitForTest(right, then_labels, else_labels, fallthrough);

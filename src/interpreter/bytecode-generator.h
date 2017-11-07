@@ -174,7 +174,8 @@ class BytecodeGenerator final : public AstVisitor<BytecodeGenerator> {
   // Visit a logical OR/AND within a test context, rewiring the jumps based
   // on the expression values.
   void VisitLogicalTest(Token::Value token, Expression* left,
-                        Expression* right, int right_slot = -1);
+                        Expression* right,
+                        int right_slot);
   void VisitNaryLogicalTest(Token::Value token, NaryOperation* expr,
                             std::vector<int>* slots);
   // Visit a (non-RHS) test for a logical op, which falls through if the test
