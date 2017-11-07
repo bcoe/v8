@@ -67,6 +67,8 @@ class BytecodeGenerator final : public AstVisitor<BytecodeGenerator> {
 
   void GenerateBytecodeBody();
   void AllocateDeferredConstants(Isolate* isolate, Handle<Script> script);
+  void AllocateNaryCoverageSlots(NaryOperation* expr,
+                                 std::vector<int>* slots);
 
   DEFINE_AST_VISITOR_SUBCLASS_MEMBERS();
 
@@ -172,8 +174,9 @@ class BytecodeGenerator final : public AstVisitor<BytecodeGenerator> {
   // Visit a logical OR/AND within a test context, rewiring the jumps based
   // on the expression values.
   void VisitLogicalTest(Token::Value token, Expression* left,
-                        Expression* right);
-  void VisitNaryLogicalTest(Token::Value token, NaryOperation* expr);
+                        Expression* right, int right_slot = -1);
+  void VisitNaryLogicalTest(Token::Value token, NaryOperation* expr,
+                            std::vector<int>* slots);
   // Visit a (non-RHS) test for a logical op, which falls through if the test
   // fails or jumps to the appropriate labels if it succeeds.
   void VisitLogicalTestSubExpression(Token::Value token, Expression* expr,

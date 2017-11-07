@@ -3081,35 +3081,31 @@ template <typename Impl>
 typename ParserBase<Impl>::ExpressionT ParserBase<Impl>::ParseBinaryExpression(
     int prec, bool accept_IN, bool* ok) {
   DCHECK_GE(prec, 4);
-  SourceRange left_range, right_range(-1, -1);
-  SourceRangeScope left_range_scope(scanner(), &left_range);
+  SourceRange right_range;
   ExpressionT x = ParseUnaryExpression(CHECK_OK);
-  left_range_scope.Finalize();
   for (int prec1 = Precedence(peek(), accept_IN); prec1 >= prec; prec1--) {
     // prec1 >= 4
     while (Precedence(peek(), accept_IN) == prec1) {
-      // Update position for compound binay expressions
-      // , e.g., foo || bar || cat.
-      if (right_range.start != -1) {
-        left_range.start = right_range.start;
-        left_range.end = right_range.end;
-      }
-
       impl()->RewriteNonPattern(CHECK_OK);
       BindingPatternUnexpectedToken();
       ArrowFormalParametersUnexpectedToken();
+
+      SourceRangeScope right_range_scope(scanner(), &right_range);
       Token::Value op = Next();
       int pos = position();
 
       const bool is_right_associative = op == Token::EXP;
       const int next_prec = is_right_associative ? prec1 : prec1 + 1;
-      SourceRangeScope right_range_scope(scanner(), &right_range);
       ExpressionT y = ParseBinaryExpression(next_prec, accept_IN, CHECK_OK);
       right_range_scope.Finalize();
       impl()->RewriteNonPattern(CHECK_OK);
 
       if (impl()->ShortcutNumericLiteralBinaryExpression(&x, y, op, pos)) {
         continue;
+      }
+
+      if (op == Token::OR || op == Token::AND) {
+        impl()->RecordExpressionSourceRange(y, right_range);
       }
 
       // For now we distinguish between comparisons and other binary
@@ -3130,14 +3126,11 @@ typename ParserBase<Impl>::ExpressionT ParserBase<Impl>::ParseBinaryExpression(
         }
       } else if (op == Token::EXP) {
         x = impl()->RewriteExponentiation(x, y, pos);
-      } else if (impl()->CollapseNaryExpression(&x, y, op, pos, right_range)) {
+      } else if (impl()->CollapseNaryExpression(&x, y, op, pos)) {
         continue;
       } else {
         // We have a "normal" binary operation.
         x = factory()->NewBinaryOperation(op, x, y, pos);
-        if (op == Token::OR || op == Token::AND) {
-          impl()->RecordBinaryOperationSourceRange(x, left_range, right_range);
-        }
       }
     }
   }

@@ -1308,7 +1308,7 @@ class PreParser : public ParserBase<PreParser> {
 
   V8_INLINE bool CollapseNaryExpression(PreParserExpression* x,
                                         PreParserExpression y, Token::Value op,
-                                        int pos, SourceRange right_range = {}) {
+                                        int pos) {
     return false;
   }
 

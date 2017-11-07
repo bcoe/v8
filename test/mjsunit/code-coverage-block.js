@@ -677,9 +677,9 @@ b()                                       // 0200
 b()                                       // 0250
 `,
 [{"start":0,"end":299,"count":1},
- {"start":18,"end":20,"count":0},
+ {"start":15,"end":20,"count":0},
  {"start":50,"end":151,"count":2},
- {"start":117,"end":118,"count":0}]);
+ {"start":114,"end":118,"count":0}]);
 
 TestCoverage(
 "LogicalOrExpression IsTest()",
@@ -691,8 +691,8 @@ const b = false                           // 0150
 if (b || true) {}                         // 0200
 `,
 [{"start":0,"end":249,"count":1},
- {"start":8,"end":13,"count":0},
- {"start":105,"end":107,"count":0}]);
+ {"start":5,"end":13,"count":0},
+ {"start":102,"end":107,"count":0}]);
 
 TestCoverage(
 "LogicalAndExpression assignment",
@@ -706,9 +706,9 @@ b()                                       // 0250
 const c = true && 50                      // 0300
 `,
 [{"start":0,"end":349,"count":1},
- {"start":19,"end":21,"count":0},
+ {"start":16,"end":21,"count":0},
  {"start":50,"end":151,"count":2},
- {"start":117,"end":118,"count":0}]);
+ {"start":114,"end":118,"count":0}]);
 
 TestCoverage(
 "LogicalAndExpression IsTest()",
@@ -718,11 +718,11 @@ const a = 0                               // 0050
 a && 50                                   // 0100
 const b = true                            // 0150
 if (b && true) {}                         // 0200
-true && true                              // 0000
+true && true                              // 0250
 `,
 [{"start":0,"end":299,"count":1},
- {"start":9,"end":13,"count":0},
- {"start":105,"end":107,"count":0}]);
+ {"start":6,"end":13,"count":0},
+ {"start":102,"end":107,"count":0}]);
 
 TestCoverage(
 "NaryLogicalOr assignment",
@@ -735,14 +735,17 @@ const e = true || true || 99              // 0200
 const f = b || b || 99                    // 0250
 const g = b || a || 99                    // 0300
 const h = a || a || 99                    // 0350
+const i = a || (b || c) || d              // 0400
 `,
-[{"start":0,"end":399,"count":1},
- {"start":177,"end":179,"count":0},
- {"start":218,"end":222,"count":0},
- {"start":226,"end":228,"count":0},
- {"start":320,"end":322,"count":0},
- {"start":365,"end":366,"count":0},
- {"start":370,"end":372,"count":0}]);
+[{"start":0,"end":449,"count":1},
+ {"start":174,"end":179,"count":0},
+ {"start":215,"end":222,"count":0},
+ {"start":223,"end":228,"count":0},
+ {"start":317,"end":322,"count":0},
+ {"start":362,"end":366,"count":0},
+ {"start":367,"end":372,"count":0},
+ {"start":412,"end":423,"count":0},
+ {"start":424,"end":428,"count":0}]);
 
 TestCoverage(
 "NaryLogicalOr IsTest()",
@@ -757,12 +760,12 @@ b || a || 99                              // 0300
 a || a || 99                              // 0350
 `,
 [{"start":0,"end":399,"count":1},
- {"start":167,"end":169,"count":0},
- {"start":208,"end":212,"count":0},
- {"start":216,"end":218,"count":0},
- {"start":310,"end":312,"count":0},
- {"start":355,"end":356,"count":0},
- {"start":360,"end":362,"count":0}]);
+ {"start":164,"end":169,"count":0},
+ {"start":205,"end":212,"count":0},
+ {"start":213,"end":218,"count":0},
+ {"start":307,"end":312,"count":0},
+ {"start":352,"end":356,"count":0},
+ {"start":357,"end":362,"count":0}]);
 
 TestCoverage(
 "NaryLogicalAnd assignment",
@@ -776,11 +779,12 @@ const f = true && false || true           // 0250
 const g = true || false && true           // 0300
 `,
 [{"start":0,"end":349,"count":1},
- {"start":119,"end":124,"count":0},
- {"start":128,"end":130,"count":0},
- {"start":169,"end":173,"count":0},
- {"start":177,"end":179,"count":0},
- {"start":318,"end":331,"count":0}]);
+ {"start":116,"end":124,"count":0},
+ {"start":125,"end":130,"count":0},
+ {"start":166,"end":173,"count":0},
+ {"start":174,"end":179,"count":0},
+ {"start":315,"end":331,"count":0}
+]);
 
 TestCoverage(
 "NaryLogicalAnd IsTest()",
@@ -794,10 +798,10 @@ true && false || true                     // 0250
 true || false && true                     // 0300
 `,
 [{"start":0,"end":349,"count":1},
- {"start":109,"end":114,"count":0},
- {"start":118,"end":120,"count":0},
- {"start":159,"end":163,"count":0},
- {"start":167,"end":169,"count":0},
- {"start":308,"end":321,"count":0}]);
+ {"start":106,"end":114,"count":0},
+ {"start":115,"end":120,"count":0},
+ {"start":156,"end":163,"count":0},
+ {"start":164,"end":169,"count":0},
+ {"start":305,"end":321,"count":0}]);
 
 %DebugToggleBlockCoverage(false);

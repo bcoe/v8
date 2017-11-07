@@ -307,8 +307,7 @@ bool Parser::ShortcutNumericLiteralBinaryExpression(Expression** x,
 }
 
 bool Parser::CollapseNaryExpression(Expression** x, Expression* y,
-                                    Token::Value op, int pos,
-                                    SourceRange right_range) {
+                                    Token::Value op, int pos) {
   // Filter out unsupported ops.
   if (!Token::IsBinaryOp(op) || op == Token::EXP) return false;
 
@@ -321,21 +320,8 @@ bool Parser::CollapseNaryExpression(Expression** x, Expression* y,
     nary = factory()->NewNaryOperation(op, binop->left(), 2);
     nary->AddSubsequent(binop->right(), binop->position());
     *x = nary;
-
-    // Copies the SourceRange information from the
-    // original BinaryOperation.
-    if (source_range_map_ != nullptr) {
-      AstNodeSourceRanges* ranges = source_range_map_->Find(binop);
-      if (ranges != nullptr) {
-        RecordExpressionSourceRange(binop->left(),
-          ranges->GetRange(SourceRangeKind::kLeft));
-        RecordExpressionSourceRange(binop->right(),
-          ranges->GetRange(SourceRangeKind::kRight));
-      }
-    }
   } else if ((*x)->IsNaryOperation()) {
     nary = (*x)->AsNaryOperation();
-
     if (nary->op() != op) return false;
   } else {
     return false;
@@ -345,7 +331,6 @@ bool Parser::CollapseNaryExpression(Expression** x, Expression* y,
   // TODO(leszeks): Do some literal collapsing here if we're appending Smi or
   // String literals.
   nary->AddSubsequent(y, pos);
-  impl()->RecordExpressionSourceRange(y, right_range);
   return true;
 }
 

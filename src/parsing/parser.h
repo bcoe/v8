@@ -765,7 +765,7 @@ class V8_EXPORT_PRIVATE Parser : public NON_EXPORTED_BASE(ParserBase<Parser>) {
   // into a single n-ary expression. In that case, *x will be changed to an
   // n-ary expression.
   bool CollapseNaryExpression(Expression** x, Expression* y, Token::Value op,
-                              int pos, SourceRange right_range = {});
+                              int pos);
 
   // Rewrites the following types of unary expressions:
   // not <literal> -> true / false
@@ -1009,15 +1009,6 @@ class V8_EXPORT_PRIVATE Parser : public NON_EXPORTED_BASE(ParserBase<Parser>) {
   // CreateDynamicFunction().
   V8_INLINE bool ParsingDynamicFunctionDeclaration() const {
     return parameters_end_pos_ != kNoSourcePosition;
-  }
-
-  V8_INLINE void RecordBinaryOperationSourceRange(
-      Expression* node, const SourceRange& left_range,
-      const SourceRange& right_range) {
-    if (source_range_map_ == nullptr) return;
-    source_range_map_->Insert(
-        node->AsBinaryOperation(),
-        new (zone()) BinaryOperationSourceRanges(left_range, right_range));
   }
 
   V8_INLINE void RecordBlockSourceRange(Block* node,
