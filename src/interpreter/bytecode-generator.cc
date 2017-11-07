@@ -4095,7 +4095,7 @@ void BytecodeGenerator::VisitNaryLogicalTest(Token::Value token,
   // The last test has the same then, else and fallthrough as the parent test.
   if (!slots->empty()) {
     BuildIncrementBlockCoverageCounterIfEnabled(
-      slots->at(expr->subsequent_length() - 1));
+        slots->at(expr->subsequent_length() - 1));
   }
   VisitForTest(expr->subsequent(expr->subsequent_length() - 1), then_labels,
                else_labels, fallthrough);
@@ -4186,7 +4186,7 @@ void BytecodeGenerator::VisitNaryLogicalOrExpression(NaryOperation* expr) {
     // actual value.
     if (!slots.empty()) {
       BuildIncrementBlockCoverageCounterIfEnabled(
-        slots[expr->subsequent_length() - 1]);
+          slots[expr->subsequent_length() - 1]);
     }
     VisitForAccumulatorValue(expr->subsequent(expr->subsequent_length() - 1));
     end_labels.Bind(builder());
@@ -4250,7 +4250,7 @@ void BytecodeGenerator::VisitNaryLogicalAndExpression(NaryOperation* expr) {
     // actual value.
     if (!slots.empty()) {
       BuildIncrementBlockCoverageCounterIfEnabled(
-        slots[expr->subsequent_length() - 1]);
+          slots[expr->subsequent_length() - 1]);
     }
     VisitForAccumulatorValue(expr->subsequent(expr->subsequent_length() - 1));
     end_labels.Bind(builder());
@@ -4260,11 +4260,10 @@ void BytecodeGenerator::VisitNaryLogicalAndExpression(NaryOperation* expr) {
 void BytecodeGenerator::AllocateNaryCoverageSlots(NaryOperation* expr,
                                                   std::vector<int>* slots) {
   Expression* first = expr->first();
-  BuildIncrementBlockCoverageCounterIfEnabled(first,
-                                              SourceRangeKind::kBody);
+  BuildIncrementBlockCoverageCounterIfEnabled(first, SourceRangeKind::kBody);
   for (size_t i = 0; i < expr->subsequent_length(); i++) {
-    slots->push_back(AllocateBlockCoverageSlotIfEnabled(expr->subsequent(i),
-      SourceRangeKind::kBody));
+    slots->push_back(AllocateBlockCoverageSlotIfEnabled(
+        expr->subsequent(i), SourceRangeKind::kBody));
   }
 }
 
