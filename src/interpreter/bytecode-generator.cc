@@ -4159,9 +4159,8 @@ void BytecodeGenerator::VisitLogicalOrExpression(BinaryOperation* binop) {
 void BytecodeGenerator::VisitNaryLogicalOrExpression(NaryOperation* expr) {
   Expression* first = expr->first();
   DCHECK_GT(expr->subsequent_length(), 0);
-  std::vector<int> slots;
 
-  AllocateNaryCoverageSlots(expr, &slots);
+  std::vector<int> slots = AllocateNaryCoverageSlots(expr);
 
   if (execution_result()->IsTest()) {
     TestResultScope* test_result = execution_result()->AsTest();
@@ -4222,10 +4221,9 @@ void BytecodeGenerator::VisitLogicalAndExpression(BinaryOperation* binop) {
 
 void BytecodeGenerator::VisitNaryLogicalAndExpression(NaryOperation* expr) {
   Expression* first = expr->first();
-  std::vector<int> slots;
   DCHECK_GT(expr->subsequent_length(), 0);
 
-  AllocateNaryCoverageSlots(expr, &slots);
+  std::vector<int> slots = AllocateNaryCoverageSlots(expr);
 
   if (execution_result()->IsTest()) {
     TestResultScope* test_result = execution_result()->AsTest();
@@ -4257,13 +4255,17 @@ void BytecodeGenerator::VisitNaryLogicalAndExpression(NaryOperation* expr) {
   }
 }
 
-void BytecodeGenerator::AllocateNaryCoverageSlots(NaryOperation* expr,
-                                                  std::vector<int>* slots) {
-  if (block_coverage_builder_ == nullptr) return;
+std::vector<int> BytecodeGenerator::AllocateNaryCoverageSlots(
+    NaryOperation* expr) {
+  std::vector<int> slots;
+
+  if (block_coverage_builder_ == nullptr) return slots;
+
   for (size_t i = 0; i < expr->subsequent_length(); i++) {
-    slots->push_back(AllocateBlockCoverageSlotIfEnabled(
-        expr->subsequent(i), SourceRangeKind::kBody));
+    slots.push_back(AllocateBlockCoverageSlotIfEnabled(expr->subsequent(i),
+                                                       SourceRangeKind::kBody));
   }
+  return slots;
 }
 
 void BytecodeGenerator::VisitRewritableExpression(RewritableExpression* expr) {

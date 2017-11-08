@@ -67,7 +67,7 @@ class BytecodeGenerator final : public AstVisitor<BytecodeGenerator> {
 
   void GenerateBytecodeBody();
   void AllocateDeferredConstants(Isolate* isolate, Handle<Script> script);
-  void AllocateNaryCoverageSlots(NaryOperation* expr, std::vector<int>* slots);
+  std::vector<int> AllocateNaryCoverageSlots(NaryOperation* expr);
 
   DEFINE_AST_VISITOR_SUBCLASS_MEMBERS();
 
