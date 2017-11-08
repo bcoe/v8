@@ -1037,7 +1037,7 @@ class V8_EXPORT_PRIVATE Parser : public NON_EXPORTED_BASE(ParserBase<Parser>) {
   V8_INLINE void RecordExpressionSourceRange(Expression* node,
                                              const SourceRange& body_range) {
     if (source_range_map_ == nullptr) return;
-    source_range_map_->Insert(static_cast<Expression*>(node),
+    source_range_map_->Insert(node,
                               new (zone()) ExpressionSourceRanges(body_range));
   }
 

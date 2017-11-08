@@ -49,8 +49,6 @@ enum class SourceRangeKind {
   kContinuation,
   kElse,
   kFinally,
-  kLeft,
-  kRight,
   kThen,
 };
 

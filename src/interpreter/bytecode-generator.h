@@ -67,7 +67,6 @@ class BytecodeGenerator final : public AstVisitor<BytecodeGenerator> {
 
   void GenerateBytecodeBody();
   void AllocateDeferredConstants(Isolate* isolate, Handle<Script> script);
-  std::vector<int> AllocateNaryCoverageSlots(NaryOperation* expr);
 
   DEFINE_AST_VISITOR_SUBCLASS_MEMBERS();
 
@@ -175,7 +174,7 @@ class BytecodeGenerator final : public AstVisitor<BytecodeGenerator> {
   void VisitLogicalTest(Token::Value token, Expression* left, Expression* right,
                         int right_slot);
   void VisitNaryLogicalTest(Token::Value token, NaryOperation* expr,
-                            std::vector<int>* slots);
+                            const std::vector<int>* slots);
   // Visit a (non-RHS) test for a logical op, which falls through if the test
   // fails or jumps to the appropriate labels if it succeeds.
   void VisitLogicalTestSubExpression(Token::Value token, Expression* expr,
@@ -203,6 +202,9 @@ class BytecodeGenerator final : public AstVisitor<BytecodeGenerator> {
   void BuildLoadPropertyKey(LiteralProperty* property, Register out_reg);
 
   int AllocateBlockCoverageSlotIfEnabled(AstNode* node, SourceRangeKind kind);
+
+  std::vector<int> AllocateNaryCoverageSlots(NaryOperation* expr);
+
   void BuildIncrementBlockCoverageCounterIfEnabled(AstNode* node,
                                                    SourceRangeKind kind);
   void BuildIncrementBlockCoverageCounterIfEnabled(int coverage_array_slot);
