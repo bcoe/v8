@@ -495,7 +495,7 @@ class BytecodeGenerator::ControlScopeForTryFinally final
   DeferredCommands* commands_;
 };
 
-// Allocate and fetch the coverage indices tracking by NaryLogical Expressions.
+// Allocate and fetch the coverage indices tracking NaryLogical Expressions.
 class BytecodeGenerator::NArayCodeCoverageSlots {
  public:
   explicit NArayCodeCoverageSlots(BytecodeGenerator* generator,
@@ -4110,14 +4110,13 @@ void BytecodeGenerator::VisitNaryLogicalTest(
   BytecodeLabels* then_labels = test_result->then_labels();
   BytecodeLabels* else_labels = test_result->else_labels();
   TestFallthrough fallthrough = test_result->fallthrough();
-  int coverage_slot = coverage_slots->GetSlotFor(0);
 
   VisitLogicalTestSubExpression(token, expr->first(), then_labels, else_labels,
-                                coverage_slot);
+                                coverage_slots->GetSlotFor(0));
   for (size_t i = 0; i < expr->subsequent_length() - 1; ++i) {
-    coverage_slot = coverage_slots->GetSlotFor(i + 1);
     VisitLogicalTestSubExpression(token, expr->subsequent(i), then_labels,
-                                  else_labels, coverage_slot);
+                                  else_labels,
+                                  coverage_slots->GetSlotFor(i + 1));
   }
   // The last test has the same then, else and fallthrough as the parent test.
   VisitForTest(expr->subsequent(expr->subsequent_length() - 1), then_labels,
@@ -4193,7 +4192,6 @@ void BytecodeGenerator::VisitNaryLogicalOrExpression(NaryOperation* expr) {
   DCHECK_GT(expr->subsequent_length(), 0);
 
   NArayCodeCoverageSlots coverage_slots(this, expr);
-  int coverage_slot = coverage_slots.GetSlotFor(0);
 
   if (execution_result()->IsTest()) {
     TestResultScope* test_result = execution_result()->AsTest();
@@ -4205,13 +4203,13 @@ void BytecodeGenerator::VisitNaryLogicalOrExpression(NaryOperation* expr) {
     test_result->SetResultConsumedByTest();
   } else {
     BytecodeLabels end_labels(zone());
-    if (VisitLogicalOrSubExpression(first, &end_labels, coverage_slot)) {
+    if (VisitLogicalOrSubExpression(first, &end_labels,
+                                    coverage_slots.GetSlotFor(0))) {
       return;
     }
     for (size_t i = 0; i < expr->subsequent_length() - 1; ++i) {
-      coverage_slot = coverage_slots.GetSlotFor(i + 1);
       if (VisitLogicalOrSubExpression(expr->subsequent(i), &end_labels,
-                                      coverage_slot)) {
+                                      coverage_slots.GetSlotFor(i + 1))) {
         return;
       }
     }
@@ -4255,7 +4253,6 @@ void BytecodeGenerator::VisitNaryLogicalAndExpression(NaryOperation* expr) {
   DCHECK_GT(expr->subsequent_length(), 0);
 
   NArayCodeCoverageSlots coverage_slots(this, expr);
-  int coverage_slot = coverage_slots.GetSlotFor(0);
 
   if (execution_result()->IsTest()) {
     TestResultScope* test_result = execution_result()->AsTest();
@@ -4267,15 +4264,13 @@ void BytecodeGenerator::VisitNaryLogicalAndExpression(NaryOperation* expr) {
     test_result->SetResultConsumedByTest();
   } else {
     BytecodeLabels end_labels(zone());
-    if (VisitLogicalAndSubExpression(first, &end_labels, coverage_slot)) {
+    if (VisitLogicalAndSubExpression(first, &end_labels,
+                                     coverage_slots.GetSlotFor(0))) {
       return;
     }
     for (size_t i = 0; i < expr->subsequent_length() - 1; ++i) {
-      if (block_coverage_builder_ != nullptr) {
-        coverage_slot = coverage_slots.GetSlotFor(i + 1);
-      }
       if (VisitLogicalAndSubExpression(expr->subsequent(i), &end_labels,
-                                       coverage_slot)) {
+                                       coverage_slots.GetSlotFor(i + 1))) {
         return;
       }
     }

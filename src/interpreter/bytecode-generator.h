@@ -206,8 +206,6 @@ class BytecodeGenerator final : public AstVisitor<BytecodeGenerator> {
 
   int AllocateBlockCoverageSlotIfEnabled(AstNode* node, SourceRangeKind kind);
 
-  std::vector<int> AllocateNaryCoverageSlots(NaryOperation* expr);
-
   void BuildIncrementBlockCoverageCounterIfEnabled(AstNode* node,
                                                    SourceRangeKind kind);
   void BuildIncrementBlockCoverageCounterIfEnabled(int coverage_array_slot);
