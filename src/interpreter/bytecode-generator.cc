@@ -495,10 +495,10 @@ class BytecodeGenerator::ControlScopeForTryFinally final
 };
 
 // Allocate and fetch the coverage indices tracking NaryLogical Expressions.
-class BytecodeGenerator::NArayCodeCoverageSlots {
+class BytecodeGenerator::NAryCodeCoverageSlots {
  public:
-  explicit NArayCodeCoverageSlots(BytecodeGenerator* generator,
-                                  NaryOperation* expr)
+  explicit NAryCodeCoverageSlots(BytecodeGenerator* generator,
+                                 NaryOperation* expr)
       : generator_(generator) {
     if (generator_->block_coverage_builder_ == nullptr) return;
     for (size_t i = 0; i < expr->subsequent_length(); i++) {
@@ -4163,7 +4163,7 @@ void BytecodeGenerator::VisitLogicalTest(Token::Value token, Expression* left,
 
 void BytecodeGenerator::VisitNaryLogicalTest(
     Token::Value token, NaryOperation* expr,
-    const NArayCodeCoverageSlots* coverage_slots) {
+    const NAryCodeCoverageSlots* coverage_slots) {
   DCHECK(token == Token::OR || token == Token::AND);
   DCHECK_GT(expr->subsequent_length(), 0);
 
@@ -4254,7 +4254,7 @@ void BytecodeGenerator::VisitNaryLogicalOrExpression(NaryOperation* expr) {
   Expression* first = expr->first();
   DCHECK_GT(expr->subsequent_length(), 0);
 
-  NArayCodeCoverageSlots coverage_slots(this, expr);
+  NAryCodeCoverageSlots coverage_slots(this, expr);
 
   if (execution_result()->IsTest()) {
     TestResultScope* test_result = execution_result()->AsTest();
@@ -4317,7 +4317,7 @@ void BytecodeGenerator::VisitNaryLogicalAndExpression(NaryOperation* expr) {
   Expression* first = expr->first();
   DCHECK_GT(expr->subsequent_length(), 0);
 
-  NArayCodeCoverageSlots coverage_slots(this, expr);
+  NAryCodeCoverageSlots coverage_slots(this, expr);
 
   if (execution_result()->IsTest()) {
     TestResultScope* test_result = execution_result()->AsTest();
