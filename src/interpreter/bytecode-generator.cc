@@ -502,8 +502,16 @@ class BytecodeGenerator::NArayCodeCoverageSlots {
       : generator_(generator) {
     if (generator_->block_coverage_builder_ == nullptr) return;
     for (size_t i = 0; i < expr->subsequent_length(); i++) {
-      coverage_slots_.push_back(generator_->AllocateBlockCoverageSlotIfEnabled(
-          expr->subsequent(i), SourceRangeKind::kBody));
+      Expression* subsequent = expr->subsequent(i);
+      if (!generator_->HasOwnBlockCoverage(subsequent)) {
+        coverage_slots_.push_back(
+            generator_->AllocateBlockCoverageSlotIfEnabled(
+                subsequent, SourceRangeKind::kBody));
+      } else {
+        // the expression is of a type that handles its own coverage count.
+        coverage_slots_.push_back(
+            static_cast<int>BlockCoverageBuilder::kNoCoverageArraySlot);
+      }
     }
   }
 
@@ -4217,7 +4225,9 @@ void BytecodeGenerator::VisitLogicalOrExpression(BinaryOperation* binop) {
   Expression* right = binop->right();
 
   int right_coverage_slot =
-      AllocateBlockCoverageSlotIfEnabled(right, SourceRangeKind::kBody);
+      HasOwnBlockCoverage(right)
+          ? BlockCoverageBuilder::kNoCoverageArraySlot
+          : AllocateBlockCoverageSlotIfEnabled(right, SourceRangeKind::kBody);
 
   if (execution_result()->IsTest()) {
     TestResultScope* test_result = execution_result()->AsTest();
@@ -4278,7 +4288,9 @@ void BytecodeGenerator::VisitLogicalAndExpression(BinaryOperation* binop) {
   Expression* right = binop->right();
 
   int right_coverage_slot =
-      AllocateBlockCoverageSlotIfEnabled(right, SourceRangeKind::kBody);
+      HasOwnBlockCoverage(right)
+          ? BlockCoverageBuilder::kNoCoverageArraySlot
+          : AllocateBlockCoverageSlotIfEnabled(right, SourceRangeKind::kBody);
 
   if (execution_result()->IsTest()) {
     TestResultScope* test_result = execution_result()->AsTest();
@@ -4332,6 +4344,12 @@ void BytecodeGenerator::VisitNaryLogicalAndExpression(NaryOperation* expr) {
     VisitForAccumulatorValue(expr->subsequent(expr->subsequent_length() - 1));
     end_labels.Bind(builder());
   }
+}
+
+// some expressions already have block coverage and should therefore
+// be skipped when calculating coverage for VisitLogicalAndExpression, etc.
+bool BytecodeGenerator::HasOwnBlockCoverage(Expression* expr) {
+  return expr->AsConditional() != nullptr;
 }
 
 void BytecodeGenerator::VisitRewritableExpression(RewritableExpression* expr) {

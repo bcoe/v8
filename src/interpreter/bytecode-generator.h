@@ -43,6 +43,9 @@ class BytecodeGenerator final : public AstVisitor<BytecodeGenerator> {
   void VisitDeclarations(Declaration::List* declarations);
   void VisitStatements(ZoneList<Statement*>* statments);
 
+ protected:
+  bool HasOwnBlockCoverage(Expression* expr);
+
  private:
   class ContextScope;
   class ControlScope;
