@@ -764,8 +764,8 @@ class V8_EXPORT_PRIVATE Parser : public NON_EXPORTED_BASE(ParserBase<Parser>) {
   // expression (with the same operation) and a value, which can be collapsed
   // into a single n-ary expression. In that case, *x will be changed to an
   // n-ary expression.
-  bool CollapseNaryExpression(Expression** x, Expression* y, Token::Value op,
-                              int pos);
+  NaryOperation* CollapseNaryExpression(Expression** x, Expression* y,
+                                        Token::Value op, int pos);
 
   // Rewrites the following types of unary expressions:
   // not <literal> -> true / false
@@ -1034,6 +1034,14 @@ class V8_EXPORT_PRIVATE Parser : public NON_EXPORTED_BASE(ParserBase<Parser>) {
         new (zone()) ConditionalSourceRanges(then_range, else_range));
   }
 
+  V8_INLINE void RecordBinaryOperationSourceRange(
+      Expression* node, const SourceRange& body_range) {
+    if (source_range_map_ == nullptr) return;
+    source_range_map_->Insert(node->AsBinaryOperation(),
+                              new (zone())
+                                  BinaryOperationSourceRanges(body_range));
+  }
+
   V8_INLINE void RecordJumpStatementSourceRange(Statement* node,
                                                 int32_t continuation_position) {
     if (source_range_map_ == nullptr) return;
@@ -1056,6 +1064,19 @@ class V8_EXPORT_PRIVATE Parser : public NON_EXPORTED_BASE(ParserBase<Parser>) {
     if (source_range_map_ == nullptr) return;
     source_range_map_->Insert(
         node, new (zone()) IterationStatementSourceRanges(body_range));
+  }
+
+  V8_INLINE void RecordNaryOperationSourceRange(
+      NaryOperation* node, const SourceRange& source_range) {
+    if (source_range_map_ == nullptr) return;
+    NaryOperationSourceRanges* ranges =
+        static_cast<NaryOperationSourceRanges*>(source_range_map_->Find(node));
+    if (ranges != nullptr) {
+      ranges->AddSourceRange(source_range);
+    } else {
+      source_range_map_->Insert(
+          node, new (zone()) NaryOperationSourceRanges(source_range));
+    }
   }
 
   V8_INLINE void RecordSuspendSourceRange(Expression* node,

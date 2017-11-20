@@ -306,33 +306,42 @@ bool Parser::ShortcutNumericLiteralBinaryExpression(Expression** x,
   return false;
 }
 
-bool Parser::CollapseNaryExpression(Expression** x, Expression* y,
-                                    Token::Value op, int pos) {
+NaryOperation* Parser::CollapseNaryExpression(Expression** x, Expression* y,
+                                              Token::Value op, int pos) {
   // Filter out unsupported ops.
-  if (!Token::IsBinaryOp(op) || op == Token::EXP) return false;
+  if (!Token::IsBinaryOp(op) || op == Token::EXP) return nullptr;
 
   // Convert *x into an nary operation with the given op, returning false if
   // this is not possible.
   NaryOperation* nary = nullptr;
   if ((*x)->IsBinaryOperation()) {
     BinaryOperation* binop = (*x)->AsBinaryOperation();
-    if (binop->op() != op) return false;
+    if (binop->op() != op) return nullptr;
 
     nary = factory()->NewNaryOperation(op, binop->left(), 2);
     nary->AddSubsequent(binop->right(), binop->position());
     *x = nary;
+
+    // reattach the source-range to the nary operation.
+    if (source_range_map_ != nullptr) {
+      AstNodeSourceRanges* source_ranges = source_range_map_->Find(binop);
+      if (source_ranges != nullptr) {
+        this->RecordNaryOperationSourceRange(
+            nary, source_ranges->GetRange(SourceRangeKind::kBody));
+      }
+    }
   } else if ((*x)->IsNaryOperation()) {
     nary = (*x)->AsNaryOperation();
-    if (nary->op() != op) return false;
+    if (nary->op() != op) return nullptr;
   } else {
-    return false;
+    return nullptr;
   }
 
   // Append our current expression to the nary operation.
   // TODO(leszeks): Do some literal collapsing here if we're appending Smi or
   // String literals.
   nary->AddSubsequent(y, pos);
-  return true;
+  return nary;
 }
 
 Expression* Parser::BuildUnaryExpression(Expression* expression,
