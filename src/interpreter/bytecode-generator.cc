@@ -496,15 +496,15 @@ class BytecodeGenerator::ControlScopeForTryFinally final
 };
 
 // Allocate and fetch the coverage indices tracking NaryLogical Expressions.
-class BytecodeGenerator::NArayCodeCoverageSlots {
+class BytecodeGenerator::NAryCodeCoverageSlots {
  public:
-  explicit NArayCodeCoverageSlots(BytecodeGenerator* generator,
-                                  NaryOperation* expr)
+  explicit NAryCodeCoverageSlots(BytecodeGenerator* generator,
+                                 NaryOperation* expr)
       : generator_(generator) {
     if (generator_->block_coverage_builder_ == nullptr) return;
     for (size_t i = 0; i < expr->subsequent_length(); i++) {
-      coverage_slots_.push_back(generator_->AllocateBlockCoverageSlotIfEnabled(
-          expr->subsequent(i), SourceRangeKind::kBody));
+      coverage_slots_.push_back(
+          generator_->AllocateNaryBlockCoverageSlotIfEnabled(expr, i));
     }
   }
 
@@ -4102,7 +4102,7 @@ void BytecodeGenerator::VisitLogicalTest(Token::Value token, Expression* left,
 
 void BytecodeGenerator::VisitNaryLogicalTest(
     Token::Value token, NaryOperation* expr,
-    const NArayCodeCoverageSlots* coverage_slots) {
+    const NAryCodeCoverageSlots* coverage_slots) {
   DCHECK(token == Token::OR || token == Token::AND);
   DCHECK_GT(expr->subsequent_length(), 0);
 
@@ -4164,7 +4164,7 @@ void BytecodeGenerator::VisitLogicalOrExpression(BinaryOperation* binop) {
   Expression* right = binop->right();
 
   int right_coverage_slot =
-      AllocateBlockCoverageSlotIfEnabled(right, SourceRangeKind::kBody);
+      AllocateBlockCoverageSlotIfEnabled(binop, SourceRangeKind::kBody);
 
   if (execution_result()->IsTest()) {
     TestResultScope* test_result = execution_result()->AsTest();
@@ -4191,7 +4191,7 @@ void BytecodeGenerator::VisitNaryLogicalOrExpression(NaryOperation* expr) {
   Expression* first = expr->first();
   DCHECK_GT(expr->subsequent_length(), 0);
 
-  NArayCodeCoverageSlots coverage_slots(this, expr);
+  NAryCodeCoverageSlots coverage_slots(this, expr);
 
   if (execution_result()->IsTest()) {
     TestResultScope* test_result = execution_result()->AsTest();
@@ -4225,7 +4225,7 @@ void BytecodeGenerator::VisitLogicalAndExpression(BinaryOperation* binop) {
   Expression* right = binop->right();
 
   int right_coverage_slot =
-      AllocateBlockCoverageSlotIfEnabled(right, SourceRangeKind::kBody);
+      AllocateBlockCoverageSlotIfEnabled(binop, SourceRangeKind::kBody);
 
   if (execution_result()->IsTest()) {
     TestResultScope* test_result = execution_result()->AsTest();
@@ -4252,7 +4252,7 @@ void BytecodeGenerator::VisitNaryLogicalAndExpression(NaryOperation* expr) {
   Expression* first = expr->first();
   DCHECK_GT(expr->subsequent_length(), 0);
 
-  NArayCodeCoverageSlots coverage_slots(this, expr);
+  NAryCodeCoverageSlots coverage_slots(this, expr);
 
   if (execution_result()->IsTest()) {
     TestResultScope* test_result = execution_result()->AsTest();
@@ -4538,6 +4538,14 @@ int BytecodeGenerator::AllocateBlockCoverageSlotIfEnabled(
   return (block_coverage_builder_ == nullptr)
              ? BlockCoverageBuilder::kNoCoverageArraySlot
              : block_coverage_builder_->AllocateBlockCoverageSlot(node, kind);
+}
+
+int BytecodeGenerator::AllocateNaryBlockCoverageSlotIfEnabled(
+    NaryOperation* node, size_t index) {
+  return (block_coverage_builder_ == nullptr)
+             ? BlockCoverageBuilder::kNoCoverageArraySlot
+             : block_coverage_builder_->AllocateNaryBlockCoverageSlot(node,
+                                                                      index);
 }
 
 void BytecodeGenerator::BuildIncrementBlockCoverageCounterIfEnabled(

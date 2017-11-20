@@ -30,13 +30,14 @@ struct SourceRange {
 // The list of ast node kinds that have associated source ranges. Note that this
 // macro is not undefined at the end of this file.
 #define AST_SOURCE_RANGE_LIST(V) \
+  V(BinaryOperation)             \
   V(Block)                       \
   V(CaseClause)                  \
   V(Conditional)                 \
-  V(Expression)                  \
   V(IfStatement)                 \
   V(IterationStatement)          \
   V(JumpStatement)               \
+  V(NaryOperation)               \
   V(Suspend)                     \
   V(SwitchStatement)             \
   V(Throw)                       \
@@ -114,9 +115,9 @@ class ConditionalSourceRanges final : public AstNodeSourceRanges {
   SourceRange else_range_;
 };
 
-class ExpressionSourceRanges final : public AstNodeSourceRanges {
+class BinaryOperationSourceRanges final : public AstNodeSourceRanges {
  public:
-  explicit ExpressionSourceRanges(const SourceRange& body_range)
+  explicit BinaryOperationSourceRanges(const SourceRange& body_range)
       : body_range_(body_range) {}
 
   SourceRange GetRange(SourceRangeKind kind) {
@@ -179,6 +180,30 @@ class JumpStatementSourceRanges final : public ContinuationSourceRanges {
  public:
   explicit JumpStatementSourceRanges(int32_t continuation_position)
       : ContinuationSourceRanges(continuation_position) {}
+};
+
+class NaryOperationSourceRanges final : public AstNodeSourceRanges {
+ public:
+  explicit NaryOperationSourceRanges(const SourceRange& source_range) {
+    this->AddSourceRange(source_range);
+  }
+
+  void AddSourceRange(const SourceRange& source_range) {
+    source_ranges_.push_back(source_range);
+  }
+
+  SourceRange GetRangeAtIndex(size_t index) {
+    DCHECK(index < source_ranges_.size());
+    return source_ranges_[index];
+  }
+
+  SourceRange GetRange(SourceRangeKind kind) {
+    // GetRangeAtIndex should be used for NarySourceRanges.
+    UNREACHABLE();
+  }
+
+ private:
+  std::vector<SourceRange> source_ranges_;
 };
 
 class SuspendSourceRanges final : public ContinuationSourceRanges {

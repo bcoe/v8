@@ -796,12 +796,36 @@ false && true && 99                       // 0150
 true && true && 99                        // 0200
 true && false || true                     // 0250
 true || false && true                     // 0300
+false || false || 99 || 55                // 0350
 `,
-[{"start":0,"end":349,"count":1},
+[{"start":0,"end":399,"count":1},
  {"start":106,"end":114,"count":0},
  {"start":115,"end":120,"count":0},
  {"start":156,"end":163,"count":0},
  {"start":164,"end":169,"count":0},
- {"start":305,"end":321,"count":0}]);
+ {"start":305,"end":321,"count":0},
+ {"start":371,"end":376,"count":0}]);
+
+// see regression: https://bugs.chromium.org/p/chromium/issues/detail?id=785778
+TestCoverage(
+"logical expressions + conditional expressions",
+`
+const a = true                            // 0000
+const b = 99                              // 0050
+const c = false                           // 0100
+const d = ''                              // 0150
+const e = a && (b ? 'left' : 'right')     // 0200
+const f = a || (b ? 'left' : 'right')     // 0250
+const g = c || d ? 'left' : 'right'       // 0300
+const h = a && b && (b ? 'left' : 'right')// 0350
+const i = d || c || (c ? 'left' : 'right')// 0400
+`,
+[{"start":0,"end":449,"count":1},
+ {"start":229,"end":236,"count":0},
+ {"start":262,"end":287,"count":0},
+ {"start":319,"end":325,"count":0},
+ {"start":384,"end":391,"count":0},
+ {"start":425,"end":431,"count":0}
+]);
 
 %DebugToggleBlockCoverage(false);

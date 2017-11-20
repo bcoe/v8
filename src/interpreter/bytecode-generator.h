@@ -56,7 +56,7 @@ class BytecodeGenerator final : public AstVisitor<BytecodeGenerator> {
   class EffectResultScope;
   class FeedbackSlotCache;
   class GlobalDeclarationsBuilder;
-  class NArayCodeCoverageSlots;
+  class NAryCodeCoverageSlots;
   class RegisterAllocationScope;
   class TestResultScope;
   class ValueResultScope;
@@ -175,7 +175,7 @@ class BytecodeGenerator final : public AstVisitor<BytecodeGenerator> {
   void VisitLogicalTest(Token::Value token, Expression* left, Expression* right,
                         int right_coverage_slot);
   void VisitNaryLogicalTest(Token::Value token, NaryOperation* expr,
-                            const NArayCodeCoverageSlots* coverage_slots);
+                            const NAryCodeCoverageSlots* coverage_slots);
   // Visit a (non-RHS) test for a logical op, which falls through if the test
   // fails or jumps to the appropriate labels if it succeeds.
   void VisitLogicalTestSubExpression(Token::Value token, Expression* expr,
@@ -205,6 +205,8 @@ class BytecodeGenerator final : public AstVisitor<BytecodeGenerator> {
   void BuildLoadPropertyKey(LiteralProperty* property, Register out_reg);
 
   int AllocateBlockCoverageSlotIfEnabled(AstNode* node, SourceRangeKind kind);
+
+  int AllocateNaryBlockCoverageSlotIfEnabled(NaryOperation* node, size_t index);
 
   void BuildIncrementBlockCoverageCounterIfEnabled(AstNode* node,
                                                    SourceRangeKind kind);

@@ -1980,7 +1980,7 @@ ParserBase<Impl>::ParseExpressionCoverGrammar(bool accept_IN, bool* ok) {
       // First time through the loop.
       result = right;
     } else if (impl()->CollapseNaryExpression(&result, right, Token::COMMA,
-                                              comma_pos)) {
+                                              comma_pos) != nullptr) {
       // Do nothing, "result" is already updated.
     } else {
       result =
@@ -3083,6 +3083,7 @@ typename ParserBase<Impl>::ExpressionT ParserBase<Impl>::ParseBinaryExpression(
   DCHECK_GE(prec, 4);
   SourceRange right_range;
   ExpressionT x = ParseUnaryExpression(CHECK_OK);
+  NaryOperation* nary = nullptr;
   for (int prec1 = Precedence(peek(), accept_IN); prec1 >= prec; prec1--) {
     // prec1 >= 4
     while (Precedence(peek(), accept_IN) == prec1) {
@@ -3104,10 +3105,6 @@ typename ParserBase<Impl>::ExpressionT ParserBase<Impl>::ParseBinaryExpression(
         continue;
       }
 
-      if (op == Token::OR || op == Token::AND) {
-        impl()->RecordExpressionSourceRange(y, right_range);
-      }
-
       // For now we distinguish between comparisons and other binary
       // operations.  (We could combine the two and get rid of this
       // code and AST node eventually.)
@@ -3126,11 +3123,16 @@ typename ParserBase<Impl>::ExpressionT ParserBase<Impl>::ParseBinaryExpression(
         }
       } else if (op == Token::EXP) {
         x = impl()->RewriteExponentiation(x, y, pos);
-      } else if (impl()->CollapseNaryExpression(&x, y, op, pos)) {
+      } else if ((nary = impl()->CollapseNaryExpression(&x, y, op, pos)) !=
+                 nullptr) {
+        impl()->RecordNaryOperationSourceRange(nary, right_range);
         continue;
       } else {
         // We have a "normal" binary operation.
         x = factory()->NewBinaryOperation(op, x, y, pos);
+        if (op == Token::OR || op == Token::AND) {
+          impl()->RecordBinaryOperationSourceRange(x, right_range);
+        }
       }
     }
   }
