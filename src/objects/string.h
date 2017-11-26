@@ -437,6 +437,9 @@ class String : public Name {
   static Handle<FixedArray> CalculateLineEnds(Handle<String> string,
                                               bool include_ending_line);
 
+  static std::vector<int> GetLineEndsVector(Handle<String> src,
+                                            bool include_ending_line);
+
  private:
   friend class Name;
   friend class StringTableInsertionKey;

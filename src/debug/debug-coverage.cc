@@ -68,7 +68,8 @@ bool CompareCoverageBlock(const CoverageBlock& a, const CoverageBlock& b) {
 }
 
 std::vector<CoverageBlock> GetSortedBlockData(Isolate* isolate,
-                                              SharedFunctionInfo* shared) {
+                                              SharedFunctionInfo* shared,
+                                              int origin_offset) {
   DCHECK(shared->HasCoverageInfo());
 
   CoverageInfo* coverage_info =
@@ -78,11 +79,16 @@ std::vector<CoverageBlock> GetSortedBlockData(Isolate* isolate,
   if (coverage_info->SlotCount() == 0) return result;
 
   for (int i = 0; i < coverage_info->SlotCount(); i++) {
-    const int start_pos = coverage_info->StartSourcePosition(i);
-    const int until_pos = coverage_info->EndSourcePosition(i);
+    int start_pos = coverage_info->StartSourcePosition(i);
+    int until_pos = coverage_info->EndSourcePosition(i);
+    DCHECK_NE(kNoSourcePosition, start_pos);
+
+    start_pos = std::max(start_pos - origin_offset, 0);
+    if (until_pos != kNoSourcePosition) {
+      until_pos = std::max(until_pos - origin_offset, 0);
+    }
     const int count = coverage_info->BlockCount(i);
 
-    DCHECK_NE(kNoSourcePosition, start_pos);
     result.emplace_back(start_pos, until_pos, count);
   }
 
@@ -344,13 +350,33 @@ bool IsBlockMode(debug::Coverage::Mode mode) {
   }
 }
 
+int CalculateOriginOffset(Isolate* isolate, const Handle<Script>& script) {
+  int offset = script->column_offset();
+
+  if (script->type() == Script::TYPE_WASM) return offset;
+
+  // calculate length of all lines, grab length corresponding to line_offset.
+  if (script->line_offset() > 0) {
+    Object* src_obj = script->source();
+    DCHECK(src_obj->IsString());
+
+    Handle<String> src(String::cast(src_obj), isolate);
+    std::vector<int> line_ends = String::GetLineEndsVector(src, true);
+
+    DCHECK(script->line_offset() <= static_cast<int>(line_ends.size()));
+    offset += line_ends[script->line_offset() - 1];
+  }
+
+  return offset;
+}
+
 void CollectBlockCoverage(Isolate* isolate, CoverageFunction* function,
-                          SharedFunctionInfo* info,
-                          debug::Coverage::Mode mode) {
+                          SharedFunctionInfo* info, debug::Coverage::Mode mode,
+                          int origin_offset) {
   DCHECK(IsBlockMode(mode));
 
   function->has_block_coverage = true;
-  function->blocks = GetSortedBlockData(isolate, info);
+  function->blocks = GetSortedBlockData(isolate, info, origin_offset);
 
   // If in binary mode, only report counts of 0/1.
   if (mode == debug::Coverage::kBlockBinary) ClampToBinary(function);
@@ -371,7 +397,6 @@ void CollectBlockCoverage(Isolate* isolate, CoverageFunction* function,
 
   // Filter out ranges of zero length.
   FilterEmptyRanges(function);
-
 
   // Reset all counters on the DebugInfo to zero.
   ResetAllBlockCounts(info);
@@ -492,11 +517,17 @@ std::unique_ptr<Coverage> Coverage::Collect(
         }
       }
 
+      int origin_offset = CalculateOriginOffset(isolate, script_handle);
+      int start_remapped = std::max(start - origin_offset, 0);
+      int end_remapped = std::max(end - origin_offset, 0);
       Handle<String> name(info->DebugName(), isolate);
-      CoverageFunction function(start, end, count, name);
+      CoverageFunction function(start_remapped, end_remapped, count, name);
 
-      if (IsBlockMode(collectionMode) && info->HasCoverageInfo()) {
-        CollectBlockCoverage(isolate, &function, info, collectionMode);
+      bool is_visible = (start_remapped + end_remapped) > 0;
+      if (IsBlockMode(collectionMode) && info->HasCoverageInfo() &&
+          is_visible) {
+        CollectBlockCoverage(isolate, &function, info, collectionMode,
+                             origin_offset);
       }
 
       // Only include a function range if itself or its parent function is
@@ -505,7 +536,8 @@ std::unique_ptr<Coverage> Coverage::Collect(
       bool parent_is_covered =
           (!nesting.empty() && functions->at(nesting.back()).count != 0);
       bool has_block_coverage = !function.blocks.empty();
-      if (is_covered || parent_is_covered || has_block_coverage) {
+      if ((is_covered || parent_is_covered || has_block_coverage) &&
+          is_visible) {
         nesting.push_back(functions->size());
         functions->emplace_back(function);
       }

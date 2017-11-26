@@ -11206,11 +11206,24 @@ static void CalculateLineEndsImpl(Isolate* isolate, std::vector<int>* line_ends,
 
 Handle<FixedArray> String::CalculateLineEnds(Handle<String> src,
                                              bool include_ending_line) {
+  Isolate* isolate = src->GetIsolate();
+  std::vector<int> line_ends =
+      String::GetLineEndsVector(src, include_ending_line);
+  int line_count = static_cast<int>(line_ends.size());
+  Handle<FixedArray> array = isolate->factory()->NewFixedArray(line_count);
+  for (int i = 0; i < line_count; i++) {
+    array->set(i, Smi::FromInt(line_ends[i]));
+  }
+  return array;
+}
+
+std::vector<int> String::GetLineEndsVector(Handle<String> src,
+                                           bool include_ending_line) {
+  std::vector<int> line_ends;
   src = Flatten(src);
   // Rough estimate of line count based on a roughly estimated average
   // length of (unpacked) code.
   int line_count_estimate = src->length() >> 4;
-  std::vector<int> line_ends;
   line_ends.reserve(line_count_estimate);
   Isolate* isolate = src->GetIsolate();
   { DisallowHeapAllocation no_allocation;  // ensure vectors stay valid.
@@ -11229,12 +11242,7 @@ Handle<FixedArray> String::CalculateLineEnds(Handle<String> src,
                             include_ending_line);
     }
   }
-  int line_count = static_cast<int>(line_ends.size());
-  Handle<FixedArray> array = isolate->factory()->NewFixedArray(line_count);
-  for (int i = 0; i < line_count; i++) {
-    array->set(i, Smi::FromInt(line_ends[i]));
-  }
-  return array;
+  return line_ends;
 }
 
 

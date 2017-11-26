@@ -50,6 +50,23 @@ var f = (function outer() {
 f()()();
 `;
 
+var column_offset =
+`(function (foo) { function a () {
+  return foo;
+}
+a(); a();
+})(99);`;
+
+var line_offset =
+`(function (foo) {                         // 0000
+const ____bar = 33;                       // 0050
+const ____snuh = 99                       // 0100
+  function a () {                         // 0150
+    return foo;                           // 0200
+}                                         // 0250
+return a();                               // 0350
+})(99);                                   // 0400`
+
 let {session, contextGroup, Protocol} = InspectorTest.start("Test collecting code coverage data with Profiler.collectCoverage.");
 
 function ClearAndGC() {
@@ -262,4 +279,32 @@ InspectorTest.runTestSuite([
       .then(ClearAndGC)
       .then(next);
   },
+  function testCoverageColumnOffset(next)
+  {
+    Protocol.Runtime.enable()
+      .then(Protocol.Profiler.enable)
+      .then(() => Protocol.Profiler.startPreciseCoverage({callCount: true, detailed: false}))
+      .then(() => utils.compileAndRunWithOrigin(contextGroup.id, column_offset, arguments.callee.name, 0, 18, false))
+      .then(Protocol.Profiler.takePreciseCoverage)
+      .then(LogSorted)
+      .then(Protocol.Profiler.stopPreciseCoverage)
+      .then(Protocol.Profiler.disable)
+      .then(Protocol.Runtime.disable)
+      .then(ClearAndGC)
+      .then(next);
+  },
+  function testCoverageLineOffset(next)
+  {
+    Protocol.Runtime.enable()
+      .then(Protocol.Profiler.enable)
+      .then(() => Protocol.Profiler.startPreciseCoverage({callCount: true, detailed: false}))
+      .then(() => utils.compileAndRunWithOrigin(contextGroup.id, line_offset, arguments.callee.name, 3, 3, false))
+      .then(Protocol.Profiler.takePreciseCoverage)
+      .then(LogSorted)
+      .then(Protocol.Profiler.stopPreciseCoverage)
+      .then(Protocol.Profiler.disable)
+      .then(Protocol.Runtime.disable)
+      .then(ClearAndGC)
+      .then(next);
+  }
 ]);
