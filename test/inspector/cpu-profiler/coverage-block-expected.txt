@@ -1110,3 +1110,66 @@ Running test: testPreciseCountCoveragePartial
         ]
     }
 }
+
+Running test: testCoverageLineOffset
+{
+    id : <messageId>
+    result : {
+        result : [
+            [0] : {
+                functions : [
+                    [0] : {
+                        functionName :
+                        isBlockCoverage : true
+                        ranges : [
+                            [0] : {
+                                count : 1
+                                endOffset : 297
+                                startOffset : 0
+                            }
+                        ]
+                    }
+                    [1] : {
+                        functionName :
+                        isBlockCoverage : true
+                        ranges : [
+                            [0] : {
+                                count : 1
+                                endOffset : 249
+                                startOffset : 0
+                            }
+                            [1] : {
+                                count : 0
+                                endOffset : 180
+                                startOffset : 172
+                            }
+                            [2] : {
+                                count : 0
+                                endOffset : 248
+                                startOffset : 209
+                            }
+                        ]
+                    }
+                    [2] : {
+                        functionName : a
+                        isBlockCoverage : true
+                        ranges : [
+                            [0] : {
+                                count : 1
+                                endOffset : 99
+                                startOffset : 0
+                            }
+                            [1] : {
+                                count : 0
+                                endOffset : 88
+                                startOffset : 77
+                            }
+                        ]
+                    }
+                ]
+                scriptId : <scriptId>
+                url : testCoverageLineOffset
+            }
+        ]
+    }
+}

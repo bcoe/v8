@@ -50,6 +50,16 @@ var f = (function outer() {
 f()()();
 `;
 
+var line_offset =
+`(function (foo) {                         // 0000
+const bar = 99                            // 0050
+  function a () {                         // 0100
+    const a = true ? 'hello' : 'goodbye'; // 0150
+}                                         // 0200
+const x = true ? 'cool' : 'neat';         // 0250
+return a();                               // 0300
+})(99);                                   // 0350`
+
 let {session, contextGroup, Protocol} = InspectorTest.start("Test collecting code coverage data with Profiler.collectCoverage.");
 
 function ClearAndGC() {
@@ -286,4 +296,18 @@ InspectorTest.runTestSuite([
       .then(ClearAndGC)
       .then(next);
   },
+  function testCoverageLineOffset(next)
+  {
+    Protocol.Runtime.enable()
+      .then(Protocol.Profiler.enable)
+      .then(() => Protocol.Profiler.startPreciseCoverage({callCount: true, detailed: true}))
+      .then(() => utils.compileAndRunWithOrigin(contextGroup.id, line_offset, arguments.callee.name, 2, 3, false))
+      .then(Protocol.Profiler.takePreciseCoverage)
+      .then(LogSorted)
+      .then(Protocol.Profiler.stopPreciseCoverage)
+      .then(Protocol.Profiler.disable)
+      .then(Protocol.Runtime.disable)
+      .then(ClearAndGC)
+      .then(next);
+  }
 ]);

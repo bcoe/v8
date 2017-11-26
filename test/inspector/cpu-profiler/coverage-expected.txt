@@ -823,3 +823,99 @@ Running test: testPreciseCountCoveragePartial
         ]
     }
 }
+
+Running test: testCoverageColumnOffset
+{
+    id : <messageId>
+    result : {
+        result : [
+            [0] : {
+                functions : [
+                    [0] : {
+                        functionName :
+                        isBlockCoverage : false
+                        ranges : [
+                            [0] : {
+                                count : 1
+                                endOffset : 49
+                                startOffset : 0
+                            }
+                        ]
+                    }
+                    [1] : {
+                        functionName :
+                        isBlockCoverage : false
+                        ranges : [
+                            [0] : {
+                                count : 1
+                                endOffset : 43
+                                startOffset : 0
+                            }
+                        ]
+                    }
+                    [2] : {
+                        functionName : a
+                        isBlockCoverage : false
+                        ranges : [
+                            [0] : {
+                                count : 2
+                                endOffset : 31
+                                startOffset : 0
+                            }
+                        ]
+                    }
+                ]
+                scriptId : <scriptId>
+                url : testCoverageColumnOffset
+            }
+        ]
+    }
+}
+
+Running test: testCoverageLineOffset
+{
+    id : <messageId>
+    result : {
+        result : [
+            [0] : {
+                functions : [
+                    [0] : {
+                        functionName :
+                        isBlockCoverage : false
+                        ranges : [
+                            [0] : {
+                                count : 1
+                                endOffset : 247
+                                startOffset : 0
+                            }
+                        ]
+                    }
+                    [1] : {
+                        functionName :
+                        isBlockCoverage : false
+                        ranges : [
+                            [0] : {
+                                count : 1
+                                endOffset : 199
+                                startOffset : 0
+                            }
+                        ]
+                    }
+                    [2] : {
+                        functionName : a
+                        isBlockCoverage : false
+                        ranges : [
+                            [0] : {
+                                count : 1
+                                endOffset : 99
+                                startOffset : 0
+                            }
+                        ]
+                    }
+                ]
+                scriptId : <scriptId>
+                url : testCoverageLineOffset
+            }
+        ]
+    }
+}
